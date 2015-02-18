@@ -247,6 +247,60 @@ namespace T3Rrender
 
             Debug.Print("Array switch: " + (pong - ping).ToString());
 
+            ping = watch.ElapsedMilliseconds;
+
+            im = new int[400, 400];
+
+            int lineStartIdx;
+            int lineEndIdx;
+            int lineRecCount;
+
+            int[] lineRecs;
+            int[] lineValid;
+            uint[] lineOverflow;
+
+            for (int i = 1; i <= 400; i++)
+            {
+                if (i > 1)
+                {
+                    lineStartIdx = linemarkers[i - 2];
+                    lineEndIdx = linemarkers[i - 1];
+                }
+                else
+                {
+                    lineStartIdx = framemarkers[i - 1];
+                    lineEndIdx = linemarkers[i];
+                
+                }
+
+                lineRecCount = lineEndIdx - lineStartIdx;
+
+                lineRecs = new int[lineRecCount];
+                lineValid = new int[lineRecCount];
+                lineOverflow = new uint[lineRecCount];
+
+                Buffer.BlockCopy(rawRecords, lineStartIdx, lineRecs,0,lineRecCount);
+                Buffer.BlockCopy(valid, lineStartIdx, lineValid, 0, lineRecCount);
+                Buffer.BlockCopy(overflow, lineStartIdx - 1, lineOverflow, 0, lineRecCount);
+
+                test = T3Rrender.RenderlineIV(
+                lineRecs,
+                lineValid,
+                lineOverflow,
+                framemarkers,
+                linemarkers,
+                i,
+                i,
+                pixelTime,
+                linemarkers.Length);
+
+                Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            }
+
+            pong = watch.ElapsedMilliseconds;
+
+            Debug.Print("Partial copy: " + (pong - ping).ToString());
+
             //string path = "mycsv.txt";
 
 

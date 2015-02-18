@@ -162,5 +162,40 @@ namespace T3Rrender
 
             return linePixels;
         }
+
+        public static int[] RenderlineIV(int[] someRecords, int[] valid, uint[] absTimes, int[] frameMarkers, int[] lineMarkers, int frame, int line, int pixelduration, int pixelCount)
+        {
+            int[] linePixels = new int[pixelCount];
+
+            // TODO: handle the no lines case.
+            // TODO: handle the multi fram case.
+            
+
+            long lineStartTime = someRecords[0] + absTimes[0] * 65536;
+
+            int tempIdx = 0;
+
+            for (int j = 0; j < linePixels.Length; j++)
+            {
+                int count = 0;
+
+                for (int i = tempIdx; i < someRecords.Length; i++)
+                {
+                    long current = someRecords[i] + absTimes[i] * 65536;
+                    long isValid = valid[i];
+
+                    if (isValid == 1 && lineStartTime + (j + 1) * pixelduration >= current)
+                    {
+                        count++;
+                    }
+
+                }
+
+                linePixels[j] = count;
+                tempIdx += count;
+            }
+
+            return linePixels;
+        }
     }
 }
