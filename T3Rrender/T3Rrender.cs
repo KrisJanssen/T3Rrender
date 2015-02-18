@@ -8,6 +8,8 @@ namespace T3Rrender
 {
     public static class T3Rrender
     {
+        #region OLD attempts
+
         public static int[] Renderline(TTTRrecord[] allRecords, uint[] absTimes, int[] frameMarkers, int[] lineMarkers, int frame, int line, int pixelduration, int pixelCount)
         {
             int[] linePixels = new int[pixelCount];
@@ -185,6 +187,47 @@ namespace T3Rrender
                     long isValid = valid[i];
 
                     if (isValid == 1 && lineStartTime + (j + 1) * pixelduration >= current)
+                    {
+                        count++;
+                    }
+
+                }
+
+                linePixels[j] = count;
+                tempIdx += count;
+            }
+
+            return linePixels;
+        }
+
+        #endregion
+
+        public static int[] RenderlineV(int[] someRecords, int pixelduration, int pixelCount)
+        {
+            int[] linePixels = new int[pixelCount];
+
+            int[] timeTag = someRecords.Select(x => Convert.ToInt32(x & 65535)).ToArray();
+            int[] channel = someRecords.Select(x => Convert.ToInt32((x >> 16) & 4095)).ToArray();
+            int[] valid = someRecords.Select(x => Convert.ToInt32((x >> 30) & 1)).ToArray();
+            int[] overflow = channel.Select(x => (x & 2048) >> 11).ToArray();
+            int[] absTime = new int[overflow.Length];
+            absTime[0] = 0;
+
+            Buffer.BlockCopy(overflow, 0, absTime, 4, (overflow.Length - 1) * 4);
+
+            absTime = absTime.Cumsum(0, (prev, next) => prev * 65536 + next).Zip(timeTag, (o, tt) => o + tt).ToArray();
+
+            long lineStartTime = absTime[0];
+
+            int tempIdx = 0;
+
+            for (int j = 0; j < linePixels.Length; j++)
+            {
+                int count = 0;
+
+                for (int i = tempIdx; i < someRecords.Length; i++)
+                {
+                    if (valid[i] == 1 && lineStartTime + (j + 1) * pixelduration >= absTime[i])
                     {
                         count++;
                     }

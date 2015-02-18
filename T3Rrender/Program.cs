@@ -32,6 +32,8 @@ namespace T3Rrender
             TTTRrecord[] records;
             int[] rawRecords;
 
+            #region Data loading
+
             // Read the actual data into memory.
             using (FileStream fsSource = new FileStream("test.t3r", FileMode.Open, FileAccess.Read))
             {
@@ -86,8 +88,7 @@ namespace T3Rrender
 
             }
 
-            int[] timeTags = records.Select(x => Convert.ToInt32(x.TimeTag)).ToArray();
-            int[] valid = records.Select(x => Convert.ToInt32(x.Valid)).ToArray();
+            #endregion
 
             // Locations of frame markers.
             int[] framemarkers = records.IndexesOf(x => (x.Valid != 1) & (x.Channel == 2)).ToArray();
@@ -112,144 +113,9 @@ namespace T3Rrender
             // From lineTime, we easily get pixelTime.
             int pixelTime = Convert.ToInt32(Math.Round(Convert.ToDouble(lineTime / linemarkers.Length)));
 
-            // Unroll overflows.
-            // TODO: This cumulative sum approach somehow looks ugly.
-            uint[] overflow =
-                records.Cumsum(0U, (prev, next) => ((prev.Channel & 2048U) >> 11) + next).ToArray();
+            int[] linepx;
 
-            int[] test = T3Rrender.Renderline(
-                records,
-                overflow,
-                framemarkers,
-                linemarkers,
-                1,
-                1,
-                pixelTime,
-                linemarkers.Length);
-
-            ping = watch.ElapsedMilliseconds;
-
-            int[,] im = new int[400, 400]; 
-
-            for (int i = 1; i <= 400; i++)
-            {
-                test = T3Rrender.Renderline(
-                records,
-                overflow,
-                framemarkers,
-                linemarkers,
-                i,
-                i,
-                pixelTime,
-                linemarkers.Length);
-
-                Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
-            }
-
-            pong = watch.ElapsedMilliseconds;
-
-            Debug.Print("Struct: " + (pong - ping).ToString());
-
-            ping = watch.ElapsedMilliseconds;
-
-            Parallel.For(
-                1,
-                400,
-                i =>
-                    {
-                        test = T3Rrender.Renderline(
-                            records,
-                            overflow,
-                            framemarkers,
-                            linemarkers,
-                            i,
-                            i,
-                            pixelTime,
-                            linemarkers.Length);
-
-                        Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
-                    });
-
-            pong = watch.ElapsedMilliseconds;
-
-            Debug.Print("Struct P: " + (pong - ping).ToString());
-
-            ping = watch.ElapsedMilliseconds;
-
-            im = new int[400, 400];
-
-            for (int i = 1; i <= 400; i++)
-            {
-                test = T3Rrender.RenderlineII(
-                rawRecords,
-                valid,
-                overflow,
-                framemarkers,
-                linemarkers,
-                i,
-                i,
-                pixelTime,
-                linemarkers.Length);
-
-                Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
-            }
-
-            pong = watch.ElapsedMilliseconds;
-
-            Debug.Print("Array: " + (pong - ping).ToString());
-
-            ping = watch.ElapsedMilliseconds;
-
-            Parallel.For(
-                1,
-                400,
-                i =>
-                {
-                    test = T3Rrender.RenderlineII(
-                        rawRecords,
-                        valid,
-                        overflow,
-                        framemarkers,
-                        linemarkers,
-                        i,
-                        i,
-                        pixelTime,
-                        linemarkers.Length);
-
-                    Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
-                });
-
-            pong = watch.ElapsedMilliseconds;
-
-            Debug.Print("Array P: " + (pong - ping).ToString());
-
-            ping = watch.ElapsedMilliseconds;
-
-            im = new int[400, 400];
-
-            for (int i = 1; i <= 400; i++)
-            {
-                test = T3Rrender.RenderlineIII(
-                rawRecords,
-                valid,
-                overflow,
-                framemarkers,
-                linemarkers,
-                i,
-                i,
-                pixelTime,
-                linemarkers.Length);
-
-                Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
-            }
-
-            pong = watch.ElapsedMilliseconds;
-
-            Debug.Print("Array switch: " + (pong - ping).ToString());
-
-            ping = watch.ElapsedMilliseconds;
-
-            im = new int[400, 400];
+            int[,] im = new int[linemarkers.Length, linemarkers.Length];
 
             int lineStartIdx;
             int lineEndIdx;
@@ -259,7 +125,199 @@ namespace T3Rrender
             int[] lineValid;
             uint[] lineOverflow;
 
-            for (int i = 1; i <= 400; i++)
+            #region OLD attempts
+
+            //int[] timeTags = records.Select(x => Convert.ToInt32(x.TimeTag)).ToArray();
+            //int[] valid = records.Select(x => Convert.ToInt32(x.Valid)).ToArray();
+
+            //// Unroll overflows.
+            //// TODO: This cumulative sum approach somehow looks ugly.
+            //uint[] overflow =
+            //    records.Cumsum(0U, (prev, next) => ((prev.Channel & 2048U) >> 11) + next).ToArray();
+
+            //int[] line = T3Rrender.Renderline(
+            //    records,
+            //    overflow,
+            //    framemarkers,
+            //    linemarkers,
+            //    1,
+            //    1,
+            //    pixelTime,
+            //    linemarkers.Length);
+
+            //ping = watch.ElapsedMilliseconds;
+
+            //im = new int[400, 400]; 
+
+            //for (int i = 1; i <= 400; i++)
+            //{
+            //    line = T3Rrender.Renderline(
+            //    records,
+            //    overflow,
+            //    framemarkers,
+            //    linemarkers,
+            //    i,
+            //    i,
+            //    pixelTime,
+            //    linemarkers.Length);
+
+            //    Buffer.BlockCopy(line, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            //}
+
+            //pong = watch.ElapsedMilliseconds;
+
+            //Debug.Print("Struct: " + (pong - ping).ToString());
+
+            //ping = watch.ElapsedMilliseconds;
+
+            //Parallel.For(
+            //    1,
+            //    400,
+            //    i =>
+            //        {
+            //            line = T3Rrender.Renderline(
+            //                records,
+            //                overflow,
+            //                framemarkers,
+            //                linemarkers,
+            //                i,
+            //                i,
+            //                pixelTime,
+            //                linemarkers.Length);
+
+            //            Buffer.BlockCopy(line, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            //        });
+
+            //pong = watch.ElapsedMilliseconds;
+
+            //Debug.Print("Struct P: " + (pong - ping).ToString());
+
+            //ping = watch.ElapsedMilliseconds;
+
+            //im = new int[400, 400];
+
+            //for (int i = 1; i <= 400; i++)
+            //{
+            //    line = T3Rrender.RenderlineII(
+            //    rawRecords,
+            //    valid,
+            //    overflow,
+            //    framemarkers,
+            //    linemarkers,
+            //    i,
+            //    i,
+            //    pixelTime,
+            //    linemarkers.Length);
+
+            //    Buffer.BlockCopy(line, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            //}
+
+            //pong = watch.ElapsedMilliseconds;
+
+            //Debug.Print("Array: " + (pong - ping).ToString());
+
+            //ping = watch.ElapsedMilliseconds;
+
+            //Parallel.For(
+            //    1,
+            //    400,
+            //    i =>
+            //    {
+            //        line = T3Rrender.RenderlineII(
+            //            rawRecords,
+            //            valid,
+            //            overflow,
+            //            framemarkers,
+            //            linemarkers,
+            //            i,
+            //            i,
+            //            pixelTime,
+            //            linemarkers.Length);
+
+            //        Buffer.BlockCopy(line, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            //    });
+
+            //pong = watch.ElapsedMilliseconds;
+
+            //Debug.Print("Array P: " + (pong - ping).ToString());
+
+            //ping = watch.ElapsedMilliseconds;
+
+            //im = new int[400, 400];
+
+            //for (int i = 1; i <= 400; i++)
+            //{
+            //    line = T3Rrender.RenderlineIII(
+            //    rawRecords,
+            //    valid,
+            //    overflow,
+            //    framemarkers,
+            //    linemarkers,
+            //    i,
+            //    i,
+            //    pixelTime,
+            //    linemarkers.Length);
+
+            //    Buffer.BlockCopy(line, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            //}
+
+            //pong = watch.ElapsedMilliseconds;
+
+            //Debug.Print("Array switch: " + (pong - ping).ToString());
+
+            //ping = watch.ElapsedMilliseconds;
+
+            //im = new int[400, 400];
+
+            //for (int i = 1; i <= 400; i++)
+            //{
+            //    if (i > 1)
+            //    {
+            //        lineStartIdx = linemarkers[i - 2];
+            //        lineEndIdx = linemarkers[i - 1];
+            //    }
+            //    else
+            //    {
+            //        lineStartIdx = framemarkers[i - 1];
+            //        lineEndIdx = linemarkers[i];
+                
+            //    }
+
+            //    lineRecCount = lineEndIdx - lineStartIdx;
+
+            //    lineRecs = new int[lineRecCount];
+            //    lineValid = new int[lineRecCount];
+            //    lineOverflow = new uint[lineRecCount];
+
+            //    Buffer.BlockCopy(rawRecords, lineStartIdx, lineRecs,0,lineRecCount);
+            //    Buffer.BlockCopy(valid, lineStartIdx, lineValid, 0, lineRecCount);
+            //    Buffer.BlockCopy(overflow, lineStartIdx - 1, lineOverflow, 0, lineRecCount);
+
+            //    line = T3Rrender.RenderlineIV(
+            //    lineRecs,
+            //    lineValid,
+            //    lineOverflow,
+            //    framemarkers,
+            //    linemarkers,
+            //    i,
+            //    i,
+            //    pixelTime,
+            //    linemarkers.Length);
+
+            //    Buffer.BlockCopy(line, 0, im, 4 * (i - 1) * 400, 4 * 400);
+            //}
+
+            //pong = watch.ElapsedMilliseconds;
+
+            //Debug.Print("Partial copy: " + (pong - ping).ToString());
+
+            #endregion
+
+            ping = watch.ElapsedMilliseconds;
+
+            im = new int[400, 400];
+
+            for (int i = 1; i <= linemarkers.Length; i++)
             {
                 if (i > 1)
                 {
@@ -270,54 +328,80 @@ namespace T3Rrender
                 {
                     lineStartIdx = framemarkers[i - 1];
                     lineEndIdx = linemarkers[i];
-                
+
                 }
 
-                lineRecCount = lineEndIdx - lineStartIdx;
+                lineRecCount = lineEndIdx - lineStartIdx + 1;
 
                 lineRecs = new int[lineRecCount];
-                lineValid = new int[lineRecCount];
-                lineOverflow = new uint[lineRecCount];
 
-                Buffer.BlockCopy(rawRecords, lineStartIdx, lineRecs,0,lineRecCount);
-                Buffer.BlockCopy(valid, lineStartIdx, lineValid, 0, lineRecCount);
-                Buffer.BlockCopy(overflow, lineStartIdx - 1, lineOverflow, 0, lineRecCount);
+                Buffer.BlockCopy(rawRecords, lineStartIdx * 4, lineRecs, 0, lineRecCount * 4);
 
-                test = T3Rrender.RenderlineIV(
+                linepx = T3Rrender.RenderlineV(
                 lineRecs,
-                lineValid,
-                lineOverflow,
-                framemarkers,
-                linemarkers,
-                i,
-                i,
                 pixelTime,
                 linemarkers.Length);
 
-                Buffer.BlockCopy(test, 0, im, 4 * (i - 1) * 400, 4 * 400);
+                Buffer.BlockCopy(linepx, 0, im, 4 * (i - 1) * 400, 4 * 400);
             }
 
             pong = watch.ElapsedMilliseconds;
 
-            Debug.Print("Partial copy: " + (pong - ping).ToString());
+            Debug.Print("Full Partial copy: " + (pong - ping).ToString());
 
-            //string path = "mycsv.txt";
+            ping = watch.ElapsedMilliseconds;
+
+            im = new int[400, 400];
+
+            Parallel.For(
+                1,
+                400,
+                i =>
+                    {
+                        if (i > 1)
+                        {
+                            lineStartIdx = linemarkers[i - 2];
+                            lineEndIdx = linemarkers[i - 1];
+                        }
+                        else
+                        {
+                            lineStartIdx = framemarkers[i - 1];
+                            lineEndIdx = linemarkers[i];
+
+                        }
+
+                        lineRecCount = lineEndIdx - lineStartIdx + 1;
+
+                        lineRecs = new int[lineRecCount];
+
+                        Buffer.BlockCopy(rawRecords, lineStartIdx * 4, lineRecs, 0, lineRecCount * 4);
+
+                        linepx = T3Rrender.RenderlineV(lineRecs, pixelTime, linemarkers.Length);
+
+                        Buffer.BlockCopy(linepx, 0, im, 4 * (i - 1) * 400, 4 * 400);
+                    });
+
+            pong = watch.ElapsedMilliseconds;
+
+            Debug.Print("Full Partial copy P: " + (pong - ping).ToString());
+
+            string path = "mycsv.txt";
 
 
-            //string str = "";
-            //for (int i = 0; i < 400; i++)
-            //{
-            //    for (int j = 0; j < 400; j++)
-            //    {
-            //        str = str + im[j, i].ToString() + "\t";
-            //    }
+            string str = "";
+            for (int i = 0; i < 400; i++)
+            {
+                for (int j = 0; j < 400; j++)
+                {
+                    str = str + im[j, i].ToString() + "\t";
+                }
 
-            //    str = str + Environment.NewLine;
-            //}
-            //using (StreamWriter outfile = new StreamWriter(path))
-            //{
-            //    outfile.Write(str);
-            //}
+                str = str + Environment.NewLine;
+            }
+            using (StreamWriter outfile = new StreamWriter(path))
+            {
+                outfile.Write(str);
+            }
             
             Console.ReadKey();
         }
