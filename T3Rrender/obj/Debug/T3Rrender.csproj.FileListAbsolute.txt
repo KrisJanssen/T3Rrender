@@ -1,7 +1,0 @@
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\bin\Debug\T3Rrender.exe.config
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\bin\Debug\test.t3r
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\bin\Debug\T3Rrender.exe
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\bin\Debug\T3Rrender.pdb
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\obj\Debug\T3Rrender.csprojResolveAssemblyReference.cache
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\obj\Debug\T3Rrender.exe
-c:\users\kris\documents\visual studio 2013\Projects\T3Rrender\T3Rrender\obj\Debug\T3Rrender.pdb
