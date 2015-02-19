@@ -347,7 +347,7 @@ namespace T3Rrender
 
             pong = watch.ElapsedMilliseconds;
 
-            Debug.Print("Full Partial copy: " + (pong - ping).ToString());
+            Console.WriteLine("Full Partial copy: " + (pong - ping).ToString());
 
             ping = watch.ElapsedMilliseconds;
 
@@ -383,7 +383,7 @@ namespace T3Rrender
 
             pong = watch.ElapsedMilliseconds;
 
-            Debug.Print("Full Partial copy P: " + (pong - ping).ToString());
+            Console.WriteLine("Full Partial copy P: " + (pong - ping).ToString());
 
             string path = "mycsv.txt";
 
