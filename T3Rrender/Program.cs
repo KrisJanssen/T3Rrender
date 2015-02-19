@@ -385,23 +385,23 @@ namespace T3Rrender
 
             Debug.Print("Full Partial copy P: " + (pong - ping).ToString());
 
-            //string path = "mycsv.txt";
+            string path = "mycsv.txt";
 
 
-            //string str = "";
-            //for (int i = 0; i < 400; i++)
-            //{
-            //    for (int j = 0; j < 400; j++)
-            //    {
-            //        str = str + im[j, i].ToString() + "\t";
-            //    }
+            string str = "";
+            for (int i = 0; i < 400; i++)
+            {
+                for (int j = 0; j < 400; j++)
+                {
+                    str = str + im[j, i].ToString() + "\t";
+                }
 
-            //    str = str + Environment.NewLine;
-            //}
-            //using (StreamWriter outfile = new StreamWriter(path))
-            //{
-            //    outfile.Write(str);
-            //}
+                str = str + Environment.NewLine;
+            }
+            using (StreamWriter outfile = new StreamWriter(path))
+            {
+                outfile.Write(str);
+            }
             
             Console.ReadKey();
         }

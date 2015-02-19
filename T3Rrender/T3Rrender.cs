@@ -224,20 +224,28 @@ namespace T3Rrender
             for (int j = 0; j < linePixels.Length; j++)
             {
                 int count = 0;
+                
                 lineStartTime += pixelduration;
 
-                for (int i = tempIdx; i < someRecords.Length; i++)
+                for (int i = tempIdx; i < absTime.Length; i++)
                 {
                     //if (lineStartTime + (j + 1) * pixelduration >= absTime[i] && valid[i] == 1)
                     // Seems quicker to calculate the boundary before...
                     //if (valid[i] == 1 && lineStartTime >= absTime[i] )
                     // Quicker still...
-                    if (lineStartTime >= absTime[i] && valid[i] == 1)
+                    if (lineStartTime > absTime[i] && valid[i] == 1)
                     {
+                        // Slow... looking into linePixels[] each iteration is a bad idea.
+                        //linePixels[j]++;
                         count++;
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
 
+                // Doing it here is faster.
                 linePixels[j] = count;
                 tempIdx += count;
             }
